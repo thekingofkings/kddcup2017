@@ -51,40 +51,54 @@ def testing_features_df(days):
     return df
 
 
-df_train1 = training_features_df("data/training_20min_avg_volume.csv")
-df_train2 = training_features_df("data/test1_20min_avg_volume.csv")
-df_train = df_train1.append(df_train2)
 
-df_test = testing_features_df([18,19,20,21,22,23,24])
+def append_weather_features(df, filepath):
+    raw = pd.read_csv(filepath)
 
 
-from sklearn.ensemble import RandomForestRegressor, AdaBoostRegressor, BaggingRegressor, ExtraTreesRegressor
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.metrics import mean_absolute_error
-
-regr = DecisionTreeRegressor(max_depth=5)
-rf = RandomForestRegressor(n_estimators=10, max_depth=3)
-adb = AdaBoostRegressor(n_estimators=10)
-knn = KNeighborsRegressor(n_neighbors=5)
-bag = BaggingRegressor()
-
-feature_columns = ['tollgate_id', 'direction', 'dayofweek', 'daysinmonth', 'slotofday']
-
-X_train = df_train1.as_matrix(columns=feature_columns)
-Y_train = df_train1['volume'].values
-
-X_vald = df_train2.as_matrix(columns=feature_columns)
-Y_vald = df_train2["volume"].values
-
-X_test = df_test.as_matrix(columns=feature_columns)
 
 
-for model in [regr, rf, adb, knn, bag]:
-    model.fit(X_train, Y_train)
-    Y_vald_est = model.predict(X_vald)
+def regression_evaluation():
+    df_train1 = training_features_df("data/training_20min_avg_volume.csv")
+    df_train2 = training_features_df("data/test1_20min_avg_volume.csv")
+    df_train = df_train1.append(df_train2)
     
-    mae = mean_absolute_error(Y_vald, Y_vald_est)
-    mape = np.mean(np.abs(Y_vald - Y_vald_est) / Y_vald)
-    print model
-    print mae, mape
+    df_test = testing_features_df([18,19,20,21,22,23,24])
+    
+    
+    from sklearn.ensemble import RandomForestRegressor, AdaBoostRegressor, BaggingRegressor
+    from sklearn.tree import DecisionTreeRegressor
+    from sklearn.neighbors import KNeighborsRegressor
+    from sklearn.metrics import mean_absolute_error
+    
+    regr = DecisionTreeRegressor(max_depth=5)
+    rf = RandomForestRegressor(n_estimators=10, max_depth=3)
+    adb = AdaBoostRegressor(n_estimators=10)
+    knn = KNeighborsRegressor(n_neighbors=5)
+    bag = BaggingRegressor()
+    
+    feature_columns = ['tollgate_id', 'direction', 'dayofweek', 'daysinmonth', 'slotofday']
+    
+    X_train = df_train1.as_matrix(columns=feature_columns)
+    Y_train = df_train1['volume'].values
+    
+    X_vald = df_train2.as_matrix(columns=feature_columns)
+    Y_vald = df_train2["volume"].values
+    
+    X_test = df_test.as_matrix(columns=feature_columns)
+    
+    
+    for model in [regr, rf, adb, knn, bag]:
+        model.fit(X_train, Y_train)
+        Y_vald_est = model.predict(X_vald)
+        
+        mae = mean_absolute_error(Y_vald, Y_vald_est)
+        mape = np.mean(np.abs(Y_vald - Y_vald_est) / Y_vald)
+        print model
+        print mae, mape
+        
+        
+if __name__ == '__main__':
+#    regression_evaluation()
+    df_train = training_features_df("data/training_20min_avg_volume.csv")
+    append_weather_features(df_train, "data/weather (table 7)_training_update.csv")
