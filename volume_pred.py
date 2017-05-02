@@ -53,8 +53,17 @@ def testing_features_df(days):
 
 
 def append_weather_features(df, filepath):
-    raw = pd.read_csv(filepath)
-
+    weather = pd.read_csv(filepath)
+    weather_columns = ['pressure', 'sea_pressure', 'wind_direction', 'wind_speed', 'temperature', 'rel_humidity', 'precipitation']
+    df_weather = []
+    for index, row in df.iterrows():
+        date = row["startT"].strftime("%Y-%m-%d")
+        hour = row["startT"].hour / 3 * 3
+        idx = np.where((weather['date']==date)&(weather['hour']==hour))[0]
+        df_weather.append(np.squeeze(weather.ix[idx, weather_columns].values).tolist())
+    df_weather = pd.DataFrame(df_weather, columns=weather_columns, index=df.index)
+    dfn = pd.concat([df, df_weather], axis=1)
+    return dfn
 
 
 
@@ -101,4 +110,4 @@ def regression_evaluation():
 if __name__ == '__main__':
 #    regression_evaluation()
     df_train = training_features_df("data/training_20min_avg_volume.csv")
-    append_weather_features(df_train, "data/weather (table 7)_training_update.csv")
+    df = append_weather_features(df_train, "data/weather (table 7)_training_update.csv")
