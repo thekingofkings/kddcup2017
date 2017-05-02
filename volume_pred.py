@@ -69,10 +69,15 @@ def append_weather_features(df, filepath):
 
 def regression_evaluation():
     df_train1 = training_features_df("data/training_20min_avg_volume.csv")
+    df_train1 = append_weather_features(df_train1, "data/weather (table 7)_training_update.csv")
+
     df_train2 = training_features_df("data/test1_20min_avg_volume.csv")
+    df_train2 = append_weather_features(df_train2, "data/testing_phase1/weather (table 7)_test1.csv")
+
     df_train = df_train1.append(df_train2)
     
     df_test = testing_features_df([18,19,20,21,22,23,24])
+    df_test = append_weather_features(df_test, "data/testing_phase1/weather (table 7)_test1.csv")
     
     
     from sklearn.ensemble import RandomForestRegressor, AdaBoostRegressor, BaggingRegressor
@@ -108,6 +113,4 @@ def regression_evaluation():
         
         
 if __name__ == '__main__':
-#    regression_evaluation()
-    df_train = training_features_df("data/training_20min_avg_volume.csv")
-    df = append_weather_features(df_train, "data/weather (table 7)_training_update.csv")
+    regression_evaluation()
