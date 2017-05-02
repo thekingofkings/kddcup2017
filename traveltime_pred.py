@@ -10,7 +10,7 @@ Created on Tue May  2 15:07:23 2017
 
 import pandas as pd
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 from volume_pred import training_features_df, append_weather_features, regression_evaluation
 
 
@@ -60,8 +60,17 @@ def prepare_data():
 
 
 
+def generate_output(df_test, Y_test_est):
+    df_test["avg_travel_time"] = Y_test_est
+    df_test["time_window"] = df_test["startT"].apply(lambda x: x.strftime("[%Y-%m-%d %H:%M:%S,") + 
+           (x + timedelta(minutes=20)).strftime("%Y-%m-%d %H:%M:%S)"))
+    df_test.to_csv("travel_time.csv", columns=["intersection_id", "tollgate_id", "time_window", "avg_travel_time"], index=False)
+    
+
+
 if __name__ == '__main__':
     df_train1, df_train2, df_test = prepare_data()
     feature_columns = ['intersection_id', 'tollgate_id', 'dayofweek', 'daysinmonth', 'slotofday']
-    regression_evaluation(df_train1, df_train2, df_test, feature_columns, "avg_travel_time")
+    Y_test_est = regression_evaluation(df_train1, df_train2, df_test, feature_columns, "avg_travel_time")
+    generate_output(df_test, Y_test_est)
     

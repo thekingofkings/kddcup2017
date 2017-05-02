@@ -10,7 +10,10 @@ Created on Mon May  1 13:01:10 2017
 
 import pandas as pd
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
+
+
+weather_columns = ['pressure', 'sea_pressure', 'wind_direction', 'wind_speed', 'temperature', 'rel_humidity', 'precipitation']
 
 
 def training_features_df(filepath):
@@ -54,7 +57,6 @@ def testing_features_df(days):
 
 def append_weather_features(df, filepath):
     weather = pd.read_csv(filepath)
-    weather_columns = ['pressure', 'sea_pressure', 'wind_direction', 'wind_speed', 'temperature', 'rel_humidity', 'precipitation']
     df_weather = []
     for index, row in df.iterrows():
         date = row["startT"].strftime("%Y-%m-%d")
@@ -67,18 +69,23 @@ def append_weather_features(df, filepath):
 
 
 
-def regression_evaluation():
+
+
+def prepare_data():
     df_train1 = training_features_df("data/training_20min_avg_volume.csv")
     df_train1 = append_weather_features(df_train1, "data/weather (table 7)_training_update.csv")
 
     df_train2 = training_features_df("data/test1_20min_avg_volume.csv")
     df_train2 = append_weather_features(df_train2, "data/testing_phase1/weather (table 7)_test1.csv")
-
-    df_train = df_train1.append(df_train2)
     
     df_test = testing_features_df([18,19,20,21,22,23,24])
     df_test = append_weather_features(df_test, "data/testing_phase1/weather (table 7)_test1.csv")
+    return df_train1, df_train2, df_test
     
+
+def regression_evaluation(df_train1, df_train2, df_test, feature_columns, labelname):
+    
+    df_train = df_train1.append(df_train2)
     
     from sklearn.ensemble import RandomForestRegressor, AdaBoostRegressor, BaggingRegressor
     from sklearn.tree import DecisionTreeRegressor
@@ -91,17 +98,16 @@ def regression_evaluation():
     knn = KNeighborsRegressor(n_neighbors=5)
     bag = BaggingRegressor()
     
-    feature_columns = ['tollgate_id', 'direction', 'dayofweek', 'daysinmonth', 'slotofday']
-    
     X_train = df_train1.as_matrix(columns=feature_columns)
-    Y_train = df_train1['volume'].values
+    Y_train = df_train1[labelname].values
     
     X_vald = df_train2.as_matrix(columns=feature_columns)
-    Y_vald = df_train2["volume"].values
+    Y_vald = df_train2[labelname].values
     
     X_test = df_test.as_matrix(columns=feature_columns)
     
-    
+    min_mape = 1
+    best_mod = None
     for model in [regr, rf, adb, knn, bag]:
         model.fit(X_train, Y_train)
         Y_vald_est = model.predict(X_vald)
@@ -110,7 +116,29 @@ def regression_evaluation():
         mape = np.mean(np.abs(Y_vald - Y_vald_est) / Y_vald)
         print model
         print mae, mape
+        if mape < min_mape:
+            min_mape = mape
+            best_mod = model
+            
+    X_train = df_train.as_matrix(columns=feature_columns)
+    Y_train = df_train[labelname].values
+    best_mod.fit(X_train, Y_train)
+    Y_test_est = best_mod.predict(X_test)
+    
+    return Y_test_est
+    
         
+        
+def generate_output(df_test, Y_test_est):
+    df_test["volume"] = Y_test_est
+    df_test["time_window"] = df_test["startT"].apply(lambda x: x.strftime("[%Y-%m-%d %H:%M:%S,") + 
+           (x + timedelta(minutes=20)).strftime("%Y-%m-%d %H:%M:%S)"))
+    df_test.to_csv("volume.csv", columns=["tollgate_id", "time_window", "direction", "volume"], index=False)
+    
+    
         
 if __name__ == '__main__':
-    regression_evaluation()
+    df_train1, df_train2, df_test = prepare_data()
+    feature_columns = ['tollgate_id', 'direction', 'dayofweek', 'daysinmonth', 'slotofday'] + weather_columns
+    Y_test_est = regression_evaluation(df_train1, df_train2, df_test, feature_columns, labelname='volume')
+    generate_output(df_test, Y_test_est)
