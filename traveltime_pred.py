@@ -64,6 +64,9 @@ def generate_output(df_test, Y_test_est):
     df_test["avg_travel_time"] = Y_test_est
     df_test["time_window"] = df_test["startT"].apply(lambda x: x.strftime("[%Y-%m-%d %H:%M:%S,") + 
            (x + timedelta(minutes=20)).strftime("%Y-%m-%d %H:%M:%S)"))
+    
+    intsec_char = {1: "A", 2: "B", 3: "C"}
+    df_test["intersection_id"] = df_test["intersection_id"].apply(lambda x: intsec_char[x])
     df_test.to_csv("travel_time.csv", columns=["intersection_id", "tollgate_id", "time_window", "avg_travel_time"], index=False)
     
 
