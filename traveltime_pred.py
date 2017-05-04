@@ -9,9 +9,9 @@ Created on Tue May  2 15:07:23 2017
 """
 
 import pandas as pd
-import numpy as np
 from datetime import datetime, timedelta
-from volume_pred import training_features_df, append_weather_features, regression_evaluation
+from volume_pred import training_features_df, append_weather_features, regression_evaluation, \
+    weather_columns
 
 
 
@@ -44,12 +44,15 @@ def testing_features_df(days):
 def prepare_data():
     df_train1 = training_features_df("data/training_20min_avg_travel_time.csv")
     df_train1 = append_weather_features(df_train1, "data/weather (table 7)_training_update.csv")
+    df_train1 = df_train1.fillna(0)
     
     df_train2 = training_features_df("data/test1_20min_avg_travel_time.csv")
     df_train2 = append_weather_features(df_train2, "data/testing_phase1/weather (table 7)_test1.csv")
+    df_train2 = df_train2.fillna(0)
     
     df_test = testing_features_df([18,19,20,21,22,23,24])
     df_test = append_weather_features(df_test, "data/testing_phase1/weather (table 7)_test1.csv")
+    df_test = df_test.fillna(0)
     
     # map string feature to integer
     intsec_int = {"A": 1, "B": 2, "C": 3}
@@ -73,7 +76,7 @@ def generate_output(df_test, Y_test_est):
 
 if __name__ == '__main__':
     df_train1, df_train2, df_test = prepare_data()
-    feature_columns = ['intersection_id', 'tollgate_id', 'dayofweek', 'daysinmonth', 'slotofday']
+    feature_columns = ['intersection_id', 'tollgate_id', 'dayofweek', 'daysinmonth', 'slotofday'] + weather_columns
     Y_test_est = regression_evaluation(df_train1, df_train2, df_test, feature_columns, "avg_travel_time")
     generate_output(df_test, Y_test_est)
     
