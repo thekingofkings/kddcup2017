@@ -8,11 +8,11 @@ import math
 from datetime import datetime,timedelta
 
 file_suffix = '.csv'
-path = 'data/training/'  # set the data directory
+path = 'data/testing_phase1/'  # set the data directory
 
 def avgVolume(in_file):
 
-    out_suffix = 'data/_20min_avg_volume'
+    out_suffix = '_20min_avg_volume'
     in_file_name = in_file + file_suffix
     out_file_name = in_file.split('_')[1] + out_suffix + file_suffix
 
@@ -64,7 +64,7 @@ def avgVolume(in_file):
 
 def main():
 
-    in_file = 'volume(table 6)_training'
+    in_file = 'volume(table 6)_test1'
     avgVolume(in_file)
 
 if __name__ == '__main__':
